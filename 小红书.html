@@ -1,0 +1,512 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书帖子详情</title>
+    <!-- 引入外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#fe2c55', // 小红书主色调
+                        secondary: '#868686', // 次要文字颜色
+                        light: '#f7f7f7', // 浅色背景
+                        dark: '#333333', // 深色文字
+                    },
+                    fontFamily: {
+                        sans: ['PingFang SC', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .text-shadow {
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+            .image-ratio {
+                aspect-ratio: 686 / 1241; /* 保持原有比例 */
+            }
+        }
+    </style>
+    
+    <style>
+        /* 全局动画定义 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.5s ease forwards;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 2s infinite;
+        }
+        
+        /* 图片轮播容器样式 - 缩小尺寸 */
+        .image-slider-container {
+            max-width: 30%; /* 缩小容器宽度 */
+            margin: 0 auto; /* 居中显示 */
+            border-radius: 12px; /* 添加圆角增加美观度 */
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 添加轻微阴影 */
+        }
+        
+        .image-slider {
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .image-track {
+            display: flex;
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        
+        .image-slide {
+            flex: 0 0 100%;
+            height: 100%;
+        }
+        
+        .image-slide img {
+            width: 100%;
+            height: 100%;
+            object-cover;
+        }
+        
+        /* 指示器样式 */
+        .indicators {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+        }
+        
+        .indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.6);
+            transition: background-color 0.3s ease, width 0.3s ease, border-radius 0.3s ease;
+        }
+        
+        .indicator.active {
+            background-color: white;
+            width: 18px;
+            border-radius: 3px;
+        }
+        
+        /* 底部导航栏样式 */
+        .tab-bar {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 顶部导航栏 -->
+    <header class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm z-50 border-b border-gray-100 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <button class="text-dark p-2 rounded-full hover:bg-gray-100 transition-colors">
+                <i class="fa fa-arrow-left text-lg"></i>
+            </button>
+            
+            <div class="text-center flex-1">
+                <h1 class="text-sm font-medium">笔记详情</h1>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button class="text-dark p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-share-alt text-lg"></i>
+                </button>
+                <button class="text-dark p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-ellipsis-h text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="pt-14 pb-24">
+        <!-- 帖子卡片 -->
+        <article class="bg-white mb-4 animate-fade-in">
+            <!-- 作者信息 -->
+            <div class="p-4 flex items-center space-x-3 animate-slide-up" style="animation-delay: 0.1s">
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/40d57a96250a4e05962d25c6d705fda5~tplv-a9rns2rl98-image.image?rcl=202509011518451182F599192FBEF4906E&amp;rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1757315926&amp;x-signature=1kYkc7yoQfh4R%2Bw%2FROBscc%2FS5dY%3D" alt="用户头像" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm">
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-medium text-sm truncate">南京旅游</h3>
+                    <p class="text-secondary text-xs flex items-center">
+                        <i class="fa fa-map-marker mr-1"></i> 江苏
+                    </p>
+                </div>
+                <button class="bg-primary text-white text-xs px-3 py-1 rounded-full hover:bg-primary/90 transition-colors">
+                    关注
+                </button>
+            </div>
+            
+            <!-- 图片滑动展示区 (缩小版，保持686*1241比例) -->
+            <div class="image-slider-container animate-slide-up" style="animation-delay: 0.2s">
+                <div class="image-slider image-ratio relative">
+                    <div class="image-track" id="imageTrack">
+                        <div class="image-slide">
+                            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/38caa675a843449e9fab197fa83a3bac~tplv-a9rns2rl98-image.image?rcl=20250901152457E205F01D5D75A57BA9A8&amp;rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1757316298&amp;x-signature=PhXzjfL0bHLfz9ZVmPdYo3rGiW0%3D" alt="南京像素画1" class="w-full h-full object-cover">
+                        </div>
+                        <div class="image-slide">
+                            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/801fff1a78594315b4109ca2c27c68ce~tplv-a9rns2rl98-image.image?rcl=202509011520551182F599192FBEF4E03F&amp;rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1757316056&amp;x-signature=HQkwjz54MGYp%2B40PRqhA1xnQHwk%3D" alt="南京像素画2" class="w-full h-full object-cover">
+                        </div>
+                        <div class="image-slide">
+                            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/b0d53dc98d2e4dfbb1de4295d7d9a988~tplv-a9rns2rl98-image.image?rcl=20250901152519A7DCA7A7C293E9C168C2&amp;rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1757316321&amp;x-signature=abFeVzwaV1nrbYUXf0XEx5CwauY%3D" alt="南京像素画3" class="w-full h-full object-cover">
+                        </div>
+                        <div class="image-slide">
+                            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/3a914030e35c4b12ac46ac161a3802d0~tplv-a9rns2rl98-image.image?rcl=20250901152253BF4AFA4D9C919412DDBB&amp;rk3s=8e244e95&amp;rrcfp=e75484ac&amp;x-expires=1757316174&amp;x-signature=hgFqvR5L740nBfZRptsyX1kZQc0%3D" alt="南京像素画4" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    
+                    <!-- 滑动指示器 -->
+                    <div class="indicators">
+                        <div class="indicator active" data-index="0"></div>
+                        <div class="indicator" data-index="1"></div>
+                        <div class="indicator" data-index="2"></div>
+                        <div class="indicator" data-index="3"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 帖子内容 -->
+            <div class="px-4 pb-3 animate-slide-up" style="animation-delay: 0.3s">
+                <h2 class="text-base font-medium mb-2">恭喜你！触发隐藏副本啦！</h2>
+                <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                    你触发了隐藏副本8bit南京！这里藏着什么宝藏呢？
+                </p>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="text-xs bg-light text-primary px-2 py-1 rounded-full">#南京文旅</span>
+                    <span class="text-xs bg-light text-primary px-2 py-1 rounded-full">#像素画</span>
+                    <span class="text-xs bg-light text-primary px-2 py-1 rounded-full">#不一样的南京</span>
+                </div>
+                <p class="text-xs text-secondary">发布于 3天前</p>
+            </div>
+            
+            <!-- 互动区 -->
+            <div class="p-4 animate-slide-up" style="animation-delay: 0.4s">
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-6">
+                        <button class="flex flex-col items-center text-secondary hover:text-primary transition-colors group">
+                            <i class="fa fa-heart-o text-xl mb-1 group-hover:animate-pulse-slow"></i>
+                            <span class="text-xs">2.4k</span>
+                        </button>
+                        <button class="flex flex-col items-center text-secondary hover:text-primary transition-colors">
+                            <i class="fa fa-comment-o text-xl mb-1"></i>
+                            <span class="text-xs">328</span>
+                        </button>
+                        <button class="flex flex-col items-center text-secondary hover:text-primary transition-colors">
+                            <i class="fa fa-star-o text-xl mb-1"></i>
+                            <span class="text-xs">1.8k</span>
+                        </button>
+                    </div>
+                    <button class="flex flex-col items-center text-secondary hover:text-primary transition-colors">
+                        <i class="fa fa-share text-xl mb-1"></i>
+                        <span class="text-xs">分享</span>
+                    </button>
+                </div>
+            </div>
+        </article>
+        
+        <!-- 评论区 -->
+        <section class="bg-white animate-fade-in" style="animation-delay: 0.5s">
+            <div class="p-4 border-b border-gray-100">
+                <h3 class="font-medium">328 条评论</h3>
+            </div>
+            
+            <!-- 评论输入框 -->
+            <div class="p-4 flex items-center space-x-3 border-b border-gray-100">
+                <img src="https://picsum.photos/id/91/200" alt="当前用户头像" class="w-8 h-8 rounded-full object-cover">
+                <div class="flex-1 bg-light rounded-full px-4 py-2 text-sm">
+                    <input type="text" placeholder="添加评论..." class="w-full bg-transparent outline-none">
+                </div>
+                <button class="text-primary text-sm font-medium">发布</button>
+            </div>
+            
+            <!-- 热门评论 -->
+            <div class="p-4">
+                <h4 class="text-sm font-medium mb-3">热门评论</h4>
+                
+                <!-- 评论项1 -->
+                <div class="mb-4 animate-slide-up" style="animation-delay: 0.6s">
+                    <div class="flex space-x-3">
+                        <img src="https://picsum.photos/id/22/200" alt="评论用户头像" class="w-8 h-8 rounded-full object-cover">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-1">
+                                <h5 class="text-xs font-medium mr-2">咸水鸭</h5>
+                                <span class="text-xs text-secondary">2天前</span>
+                            </div>
+                            <p class="text-sm mb-2">这个好看！</p>
+                            <div class="flex items-center space-x-4">
+                                <button class="text-secondary text-xs flex items-center hover:text-primary transition-colors">
+                                    <i class="fa fa-heart-o mr-1"></i> 128
+                                </button>
+                                <button class="text-secondary text-xs hover:text-primary transition-colors">回复</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 评论项2 -->
+                <div class="mb-4 animate-slide-up" style="animation-delay: 0.7s">
+                    <div class="flex space-x-3">
+                        <img src="https://picsum.photos/id/29/200" alt="评论用户头像" class="w-8 h-8 rounded-full object-cover">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-1">
+                                <h5 class="text-xs font-medium mr-2">用户2003</h5>
+                                <span class="text-xs text-secondary">3天前</span>
+                            </div>
+                            <p class="text-sm mb-2">已触发！</p>
+                            <div class="flex items-center space-x-4">
+                                <button class="text-secondary text-xs flex items-center hover:text-primary transition-colors">
+                                    <i class="fa fa-heart-o mr-1"></i> 86
+                                </button>
+                                <button class="text-secondary text-xs hover:text-primary transition-colors">回复</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 查看更多评论 -->
+                <button class="w-full py-2 text-primary text-sm font-medium border border-primary/30 rounded-full hover:bg-primary/5 transition-colors">
+                    查看更多评论
+                </button>
+            </div>
+        </section>
+    </main>
+    
+    <!-- 底部导航栏 -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-white/90 tab-bar border-t border-gray-100 z-50">
+        <div class="grid grid-cols-5 py-2">
+            <button class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors">
+                <i class="fa fa-home text-lg"></i>
+                <span class="text-xs mt-1">首页</span>
+            </button>
+            <button class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors">
+                <i class="fa fa-compass text-lg"></i>
+                <span class="text-xs mt-1">发现</span>
+            </button>
+            <button class="flex flex-col items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white -mt-5 shadow-lg">
+                    <i class="fa fa-plus text-lg"></i>
+                </div>
+            </button>
+            <button class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors">
+                <i class="fa fa-bell-o text-lg"></i>
+                <span class="text-xs mt-1">消息</span>
+            </button>
+            <button class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors">
+                <i class="fa fa-user-o text-lg"></i>
+                <span class="text-xs mt-1">我的</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- JavaScript 交互 -->
+    <script>
+        // 图片滑动功能
+        const track = document.getElementById('imageTrack');
+        const slides = document.querySelectorAll('.image-slide');
+        const indicators = document.querySelectorAll('.indicator');
+        let currentIndex = 0;
+        let startX = 0;
+        let isDragging = false;
+        
+        // 更新滑块位置
+        function updateSlidePosition() {
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            
+            // 更新指示器状态
+            indicators.forEach((indicator, index) => {
+                if (index === currentIndex) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+        
+        // 下一张图片
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % slides.length;
+            updateSlidePosition();
+        }
+        
+        // 上一张图片
+        function prevSlide() {
+            currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+            updateSlidePosition();
+        }
+        
+        // 点击指示器切换图片
+        indicators.forEach(indicator => {
+            indicator.addEventListener('click', () => {
+                currentIndex = parseInt(indicator.dataset.index);
+                updateSlidePosition();
+            });
+        });
+        
+        // 触摸事件 - 开始
+        track.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+        });
+        
+        // 触摸事件 - 移动
+        track.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault(); // 防止页面滚动
+        });
+        
+        // 触摸事件 - 结束
+        track.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const diffX = startX - endX;
+            
+            // 滑动距离超过50px才切换图片
+            if (diffX > 50) {
+                nextSlide();
+            } else if (diffX < -50) {
+                prevSlide();
+            }
+            
+            isDragging = false;
+        });
+        
+        // 鼠标事件 - 用于桌面端测试
+        track.addEventListener('mousedown', (e) => {
+            startX = e.clientX;
+            isDragging = true;
+        });
+        
+        track.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+        });
+        
+        track.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            
+            const endX = e.clientX;
+            const diffX = startX - endX;
+            
+            if (diffX > 50) {
+                nextSlide();
+            } else if (diffX < -50) {
+                prevSlide();
+            }
+            
+            isDragging = false;
+        });
+        
+        track.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+        
+        // 点赞功能交互
+        document.querySelectorAll('.fa-heart-o').forEach(heart => {
+            heart.addEventListener('click', function() {
+                if (this.classList.contains('fa-heart-o')) {
+                    this.classList.remove('fa-heart-o');
+                    this.classList.add('fa-heart', 'text-primary');
+                    
+                    // 更新数字
+                    const countEl = this.nextElementSibling;
+                    if (countEl) {
+                        let count = parseInt(countEl.textContent.replace(/[^\d]/g, ''));
+                        countEl.textContent = (count + 1) + (count >= 1000 ? 'k' : '');
+                    }
+                } else {
+                    this.classList.remove('fa-heart', 'text-primary');
+                    this.classList.add('fa-heart-o');
+                    
+                    // 更新数字
+                    const countEl = this.nextElementSibling;
+                    if (countEl) {
+                        let count = parseInt(countEl.textContent.replace(/[^\d]/g, ''));
+                        countEl.textContent = (count - 1) + (count > 1000 ? 'k' : '');
+                    }
+                }
+            });
+        });
+        
+        // 收藏功能交互
+        document.querySelectorAll('.fa-star-o').forEach(star => {
+            star.addEventListener('click', function() {
+                if (this.classList.contains('fa-star-o')) {
+                    this.classList.remove('fa-star-o');
+                    this.classList.add('fa-star', 'text-primary');
+                    
+                    // 更新数字
+                    const countEl = this.nextElementSibling;
+                    if (countEl) {
+                        let count = parseInt(countEl.textContent.replace(/[^\d]/g, ''));
+                        countEl.textContent = (count + 1) + (count >= 1000 ? 'k' : '');
+                    }
+                } else {
+                    this.classList.remove('fa-star', 'text-primary');
+                    this.classList.add('fa-star-o');
+                    
+                    // 更新数字
+                    const countEl = this.nextElementSibling;
+                    if (countEl) {
+                        let count = parseInt(countEl.textContent.replace(/[^\d]/g, ''));
+                        countEl.textContent = (count - 1) + (count > 1000 ? 'k' : '');
+                    }
+                }
+            });
+        });
+        
+        // 滚动时导航栏样式变化
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-sm');
+            } else {
+                header.classList.remove('shadow-sm');
+            }
+        });
+    </script>
+
+
+    </body></html>
